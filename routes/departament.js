@@ -34,6 +34,7 @@ router.get('/departament/count', function (req, res) {
 });
 
 router.get('/departament', function (req, res) {
+    var results = [];
     var i = req.query.page * req.query.size - req.query.size;
     var nr;
     var prevPage = req.query.page -1;
@@ -48,13 +49,18 @@ router.get('/departament', function (req, res) {
     connection().query("SELECT * FROM public.departament ORDER BY name OFFSET " + i + " LIMIT "+ req.query.size, function (err, result) {
         connection().end();
         if (err) return console.error(err);
+        var data = result.rows;
+        data.forEach(function (t) {
+            t["link"] = "http://localhost:3000/departament/" + t["id"];
+            results.push(t);
+        });
         if(nr >= prevPage*size){
             if(req.get('Accept') === 'application/json' || req.get('Accept') === 'text/html'){
                 res.header('Content-Type', 'application/json');
-                res.json(result.rows);
+                res.json(results);
             }else if(req.get('Accept') === 'application/xml') {
                 res.header('Content-Type', 'application/xml');
-                res.send(xml(result.rows));
+                res.send(xml(results));
             }else{
                 res.sendStatus(406);
             }
