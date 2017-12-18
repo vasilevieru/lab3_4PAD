@@ -1,43 +1,83 @@
 var express = require('express');
 var router = express.Router();
 var connection = require('./databaseConnect');
+var xml = require('xml');
 
-/*router.get('/departament', function (req, res, next) {
-    var query = connection().query("SELECT id, name, number_employee, chief_name from public.departament", function (err, result) {
-        connection().end();
-        if (err) return console.error(err);
-        console.log(result.rows);
-        res.send(result.rows);
-    });
-});*/
-
-router.get('/departament/', function (req, res) {
+router.get('/departament', function (req, res) {
     var results = [];
-    var i = req.query.page * req.query.size - req.query.size;
-    var j = parseInt(i) + parseInt(req.query.size);
-
-    var query = connection().query("select * from public.departament;", function (err, result) {
+    connection().query("SELECT id, name, number_employee, chief_name from public.departament", function (err, result) {
         connection().end();
         if (err) return console.error(err);
-        for (var k = i; k < j; k++) {
-            results.push(result.rows[k]);
+        var data = result.rows;
+        data.forEach(function (t) {
+            t["link"] = "http://localhost:3000/departament/" + t["id"];
+            results.push(t);
+        });
+        if(req.get('Accept') === 'application/json' || req.get('Accept') === 'text/html'){
+            res.header('Content-Type', 'application/json');
+            res.json(results);
+        }else if(req.get('Accept') === 'application/xml') {
+            res.header('Content-Type', 'application/xml');
+            res.send(xml(results));
+        }else{
+            res.sendStatus(406);
         }
-        res.send(results);
+    });
+});
+
+router.get('/departament', function (req, res) {
+    var i = req.query.page * req.query.size - req.query.size;
+    var nr;
+    var prevPage = req.query.page -1;
+    var size = req.query.size;
+
+    connection().query("select count(*) from public.departament", function (err, result) {
+        connection().end();
+        if(err) return console.error(err);
+        nr = result.rows[0].count;
+    });
+
+    connection().query("SELECT * FROM public.departament ORDER BY name OFFSET " + i + " LIMIT "+ req.query.size, function (err, result) {
+        connection().end();
+        if (err) return console.error(err);
+        if(nr >= prevPage*size){
+            if(req.get('Accept') === 'application/json' || req.get('Accept') === 'text/html'){
+                res.header('Content-Type', 'application/json');
+                res.json(result.rows);
+            }else if(req.get('Accept') === 'application/xml') {
+                res.header('Content-Type', 'application/xml');
+                res.send(xml(result.rows));
+            }else{
+                res.sendStatus(406);
+            }
+        }else {
+            res.status(400);
+            res.render('index',{title:"400", content: "Bad request"});
+        }
+
     });
 });
 
 router.get('/departament/filter', function (req, res) {
-    var query = connection().query("select * from public.departament where name LIKE $1",['%' + req.query.name + '%'],
+    connection().query("select * from public.departament where name LIKE $1",['%' + req.query.name + '%'],
         function (err, result) {
             connection().end();
             if (err) return console.error(err);
             console.log(result.rows);
-            res.send(result.rows);
+            if(req.get('Accept') === 'application/json' || req.get('Accept') === 'text/html'){
+                res.header('Content-Type', 'application/json');
+                res.json(result.rows);
+            }else if(req.get('Accept') === 'application/xml') {
+                res.header('Content-Type', 'application/xml');
+                res.send(xml(result.rows));
+            }else{
+                res.sendStatus(406);
+            }
         });
 });
 
 router.post('/departament', function (req, res) {
-    var query = connection().query("insert into public.departament (name, number_employee, chief_name) values ($1, $2, $3) " +
+    connection().query("insert into public.departament (name, number_employee, chief_name) values ($1, $2, $3) " +
         "returning id, name, number_employee, chief_name",
         [req.body.name, req.body.number_employee, req.body.chief_name], function (err, result) {
             if (err) return console.error(err);
@@ -49,7 +89,7 @@ router.post('/departament', function (req, res) {
 });
 
 router.put('/departament', function (req, res) {
-    var query = connection().query("update public.departament set name=$1, " +
+    connection().query("update public.departament set name=$1, " +
         "number_employee=$2, chief_name=$3 where id=$4 returning id, name, number_employee, chief_name",
         [req.body.name, req.body.number_employee, req.body.chief_name, req.query.id],
         function (err, result) {
@@ -61,8 +101,8 @@ router.put('/departament', function (req, res) {
 });
 
 router.delete('/departament', function (req, res) {
-    var query = connection().query("delete from public.departament where id=$1", [req.query.id],
-        function (err, result) {
+    connection().query("delete from public.departament where id=$1", [req.query.id],
+        function (err) {
             connection().end();
             if (err) return console.error(err);
             res.render('index', {title: "200 OK", content: "Successfully Deleted"});

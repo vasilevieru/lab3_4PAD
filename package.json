@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "body-parser": "~1.18.2",
+    "body-parser-xml": "^1.1.0",
     "buffer-alloc": "^1.1.0",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
@@ -14,6 +15,7 @@
     "jade": "~1.11.0",
     "morgan": "~1.9.0",
     "pg": "^7.4.0",
-    "serve-favicon": "~2.4.5"
+    "serve-favicon": "~2.4.5",
+    "xml": "^1.0.1"
   }
 }
