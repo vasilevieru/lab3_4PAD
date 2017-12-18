@@ -25,6 +25,14 @@ router.get('/departament/list', function (req, res) {
     });
 });
 
+router.get('/departament/count', function (req, res) {
+    connection().query("select count(*) from public.departament", function (err, result) {
+        connection().end();
+        if(err) return console.error(err);
+        res.send(result.rows[0].count);
+    });
+});
+
 router.get('/departament', function (req, res) {
     var i = req.query.page * req.query.size - req.query.size;
     var nr;

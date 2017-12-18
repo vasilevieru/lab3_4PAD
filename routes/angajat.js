@@ -17,6 +17,14 @@ router.get('/angajati/list', function (req, res) {
     });
 });
 
+router.get('/angajati/count', function (req, res) {
+    connection().query("select count(*) from public.angajat", function (err, result) {
+        connection().end();
+        if(err) return console.error(err);
+        res.send(result.rows[0].count);
+    });
+});
+
 router.get('/angajati/:id', function (req, res) {
 
     connection().query("select id, name, salary from public.angajat where id=$1", [req.params.id], function (err, result) {
