@@ -3,7 +3,7 @@ var router = express.Router();
 var connection = require('./databaseConnect');
 var xml = require('xml');
 
-router.get('/departament', function (req, res) {
+router.get('/departament/list', function (req, res) {
     var results = [];
     connection().query("SELECT id, name, number_employee, chief_name from public.departament", function (err, result) {
         connection().end();

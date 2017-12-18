@@ -3,7 +3,7 @@ var router = express.Router();
 var connection = require('./databaseConnect');
 var xml = require('xml');
 
-router.get('/angajati', function (req, res) {
+router.get('/angajati/list', function (req, res) {
     var results = [];
     connection().query("select * from public.angajat", function (err, result) {
         connection().end();
