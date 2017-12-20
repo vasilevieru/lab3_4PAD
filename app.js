@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var cors = require('cors');
 require('body-parser-xml')(bodyParser);
+var validator = require('express-validator');
 
 var angajat = require('./routes/angajat');
 var departament = require('./routes/departament');
@@ -31,6 +32,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
+app.use(validator());
 
 app.use('/', angajat);
 app.use('/', departament);

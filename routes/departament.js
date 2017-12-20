@@ -1,10 +1,10 @@
 var express = require('express');
 var router = express.Router();
 var connection = require('./databaseConnect');
-var jstoxml = require('js2xmlparser');
+var js2xml = require('js2xmlparser');
 
 
-router.get('/departament/list', function (req, res) {
+router.get('/api/departament/list', function (req, res) {
     var results = [];
     var xml;
     connection().query("SELECT id, name, number_employee, chief_name from public.departament", function (err, result) {
@@ -12,7 +12,7 @@ router.get('/departament/list', function (req, res) {
         if (err) return console.error(err);
         var data = result.rows;
         data.forEach(function (t) {
-            t["link"] = "http://localhost:3000/departament/" + t["id"];
+            t["link"] = "http://localhost:3000/api/departament/" + t["id"];
             results.push(JSON.parse(JSON.stringify(t)));
         });
         //console.log(JSON.parse(JSON.stringify(result.rows[0])));
@@ -22,7 +22,7 @@ router.get('/departament/list', function (req, res) {
             res.json(results);
         } else if (req.get('Accept') === 'application/xml') {
             res.header('Content-Type', 'application/xml');
-            xml = jstoxml.parse("departamente", results);
+            xml = js2xml.parse("departamente", results);
             res.send(xml);
         } else {
             res.sendStatus(406);
@@ -30,7 +30,7 @@ router.get('/departament/list', function (req, res) {
     });
 });
 
-router.get('/departament/count', function (req, res) {
+router.get('/api/departament/count', function (req, res) {
     connection().query("select count(*) from public.departament", function (err, result) {
         connection().end();
         if (err) return console.error(err);
@@ -38,12 +38,17 @@ router.get('/departament/count', function (req, res) {
     });
 });
 
-router.get('/departament', function (req, res) {
+router.get('/api/departament', function (req, res) {
+
+    req.checkQuery("page", 1).notEmpty().isNumeric();
+    req.checkQuery("size", 3).notEmpty().isNumeric();
+
     var results = [];
     var i = req.query.page * req.query.size - req.query.size;
     var nr, xml;
     var prevPage = req.query.page - 1;
     var size = req.query.size;
+    var error = validationErrors();
 
     function getNumberRecords(callback) {
         connection().query("select count(*) from public.departament", function (err, result) {
@@ -60,7 +65,7 @@ router.get('/departament', function (req, res) {
             if (err) return console.error(err);
             var data = result.rows;
             data.forEach(function (t) {
-                t["link"] = "http://localhost:3000/departament/" + t["id"];
+                t["link"] = "http://localhost:3000/api/departament/" + t["id"];
                 results.push(JSON.parse(JSON.stringify(t)));
             });
             callback();
@@ -74,7 +79,7 @@ router.get('/departament', function (req, res) {
                 res.json(results);
             } else if (req.get('Accept') === 'application/xml') {
                 res.header('Content-Type', 'application/xml');
-                xml = jstoxml.parse("departament", results);
+                xml = js2xml.parse("departament", results);
                 res.send(xml);
             } else {
                 res.sendStatus(406);
@@ -85,46 +90,72 @@ router.get('/departament', function (req, res) {
         }
     }
 
-    getNumberRecords(function () {
-        getRecordsByPage(function () {
-            returnTypeOfData();
+    if (error) {
+        res.status(400);
+        res.json(error);
+    } else {
+        getNumberRecords(function () {
+            getRecordsByPage(function () {
+                returnTypeOfData();
+            });
         });
-    });
+    }
 });
 
-router.get('/departament/filter', function (req, res) {
+router.get('/api/departament/filter', function (req, res) {
+
+    req.checkQuery("name", "Re").notEmpty().isAlpha();
+
     var xml;
-    connection().query("select * from public.departament where name LIKE $1", ['%' + req.query.name + '%'],
-        function (err, result) {
-            connection().end();
-            if (err) return console.error(err);
-            console.log(result.rows);
-            if (req.get('Accept') === 'application/json' || req.get('Accept') === 'text/html') {
-                res.header('Content-Type', 'application/json');
-                res.json(result.rows);
-            } else if (req.get('Accept') === 'application/xml') {
-                res.header('Content-Type', 'application/xml');
-                xml = jstoxml.parse(JSON.parse(JSON.stringify(result.rows)));
-                res.send(xml);
-            } else {
-                res.sendStatus(406);
-            }
-        });
+    var error = validationErrors();
+    if (error) {
+        res.status(400);
+        res.json(error);
+    } else {
+        connection().query("select * from public.departament where name LIKE $1", ['%' + req.query.name + '%'],
+            function (err, result) {
+                connection().end();
+                if (err) return console.error(err);
+                console.log(result.rows);
+                if (req.get('Accept') === 'application/json' || req.get('Accept') === 'text/html') {
+                    res.header('Content-Type', 'application/json');
+                    res.json(result.rows);
+                } else if (req.get('Accept') === 'application/xml') {
+                    res.header('Content-Type', 'application/xml');
+                    xml = js2xml.parse(JSON.parse(JSON.stringify(result.rows)));
+                    res.send(xml);
+                } else {
+                    res.sendStatus(406);
+                }
+            });
+    }
 });
 
-router.post('/departament', function (req, res) {
-    connection().query("insert into public.departament (name, number_employee, chief_name) values ($1, $2, $3) " +
-        "returning id, name, number_employee, chief_name",
-        [req.body.name, req.body.number_employee, req.body.chief_name], function (err, result) {
-            if (err) return console.error(err);
-            connection().end();
-            console.log(result.rows);
-            res.render('index', {title: "200 OK", content: "Successfully created"});
-            res.status(200);
-        })
+router.post('/api/departament', function (req, res) {
+
+    req.checkBody("name", "Resurse Umane").notEmpty().isAlpha();
+    req.checkBody("number_employee", 3).notEmpty().isNumeric();
+    req.checkBody("chief_name", "Istrati Ion").notEmpty().isAlpha();
+
+    var error = validationErrors();
+
+    if (error) {
+        res.status(400);
+        res.json(error)
+    } else {
+        connection().query("insert into public.departament (name, number_employee, chief_name) values ($1, $2, $3) " +
+            "returning id, name, number_employee, chief_name",
+            [req.body.name, req.body.number_employee, req.body.chief_name], function (err, result) {
+                if (err) return console.error(err);
+                connection().end();
+                console.log(result.rows);
+                res.render('index', {title: "200 OK", content: "Successfully created"});
+                res.status(200);
+            })
+    }
 });
 
-router.put('/departament', function (req, res) {
+router.put('/api/departament', function (req, res) {
     connection().query("update public.departament set name=$1, " +
         "number_employee=$2, chief_name=$3 where id=$4 returning id, name, number_employee, chief_name",
         [req.body.name, req.body.number_employee, req.body.chief_name, req.query.id],
@@ -136,7 +167,7 @@ router.put('/departament', function (req, res) {
         });
 });
 
-router.delete('/departament', function (req, res) {
+router.delete('/api/departament', function (req, res) {
     connection().query("delete from public.departament where id=$1", [req.query.id],
         function (err) {
             connection().end();
