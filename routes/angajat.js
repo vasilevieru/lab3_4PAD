@@ -7,13 +7,14 @@ require('express-validator/check');
 router.get('/api/angajati/list', function (req, res) {
     var results = [];
     var xml;
+
     connection().query("select * from public.angajat", function (err, result) {
         connection().end();
         if (err) return console.error(err);
         var data = result.rows;
         data.forEach(function (t) {
-            t["link"] = "http://localhost:3000/api/angajati/" + t["id"];
-            results.push(JSON.parse(JSON.stringify(t)));
+                t["link"] = "http://localhost:3000/api/angajati/" + t["id"];
+                results.push(JSON.parse(JSON.stringify(t)));
         });
         if (req.get('Accept') === 'application/json' || req.get('Accept') === 'text/html') {
             res.header('Content-Type', 'application/json');

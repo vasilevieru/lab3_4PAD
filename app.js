@@ -1,16 +1,16 @@
-var express = require('express');
-var path = require('path');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var cors = require('cors');
+const express = require('express');
+const path = require('path');
+const logger = require('morgan');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 require('body-parser-xml')(bodyParser);
-var validator = require('express-validator');
+const validator = require('express-validator');
 
-var angajat = require('./routes/angajat');
-var departament = require('./routes/departament');
+const angajat = require('./routes/angajat');
+const departament = require('./routes/departament');
 
-var app = express();
+const app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var connection = require('./databaseConnect');
 var js2xml = require('js2xmlparser');
+require('express-validator/check');
 
 
 router.get('/api/departament/list', function (req, res) {
@@ -38,6 +39,24 @@ router.get('/api/departament/count', function (req, res) {
     });
 });
 
+router.get('/api/departament/:id', function (req, res) {
+    var xml;
+    connection().query("select id, name, number_employee, chief_name from public.departament where id=$1", [req.params.id], function (err, result) {
+        connection().end();
+        if (err) return console.error(err);
+        if (req.get('Accept') === 'application/json' || req.get('Accept') === 'text/html') {
+            res.header('Content-Type', 'application/json');
+            res.json(result.rows);
+        } else if (req.get('Accept') === 'application/xml') {
+            res.header('Content-Type', 'application/xml');
+            xml = js2xml.parse("angajat", JSON.parse(JSON.stringify(result.rows)));
+            res.send(xml);
+        } else {
+            res.sendStatus(406);
+        }
+    });
+});
+
 router.get('/api/departament', function (req, res) {
 
     req.checkQuery("page", 1).notEmpty().isNumeric();
@@ -48,7 +67,7 @@ router.get('/api/departament', function (req, res) {
     var nr, xml;
     var prevPage = req.query.page - 1;
     var size = req.query.size;
-    var error = validationErrors();
+    var error = req.validationErrors();
 
     function getNumberRecords(callback) {
         connection().query("select count(*) from public.departament", function (err, result) {
