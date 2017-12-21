@@ -186,8 +186,8 @@ router.put('/api/departament/:id', function (req, res) {
         });
 });
 
-router.delete('/api/departament', function (req, res) {
-    connection().query("delete from public.departament where id=$1", [req.query.id],
+router.delete('/api/departament/:id', function (req, res) {
+    connection().query("delete from public.departament where id=$1", [req.params.id],
         function (err) {
             connection().end();
             if (err) return console.error(err);
