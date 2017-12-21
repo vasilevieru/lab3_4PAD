@@ -174,10 +174,10 @@ router.post('/api/departament', function (req, res) {
     }
 });
 
-router.put('/api/departament', function (req, res) {
+router.put('/api/departament/:id', function (req, res) {
     connection().query("update public.departament set name=$1, " +
         "number_employee=$2, chief_name=$3 where id=$4 returning id, name, number_employee, chief_name",
-        [req.body.name, req.body.number_employee, req.body.chief_name, req.query.id],
+        [req.body.name, req.body.number_employee, req.body.chief_name, req.params.id],
         function (err, result) {
             connection().end();
             if (err) return console.error(err);
