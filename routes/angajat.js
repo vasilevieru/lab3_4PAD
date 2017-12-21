@@ -125,7 +125,7 @@ router.get('/api/angajati/filter', function (req, res) {
     req.checkQuery("name", "Resurse Umane").notEmpty().isAlpha();
 
     var xml;
-    var error = validationErrors();
+    var error = req.validationErrors();
 
     if (error) {
         res.status(400);

@@ -126,7 +126,7 @@ router.get('/api/departament/filter', function (req, res) {
     req.checkQuery("name", "Re").notEmpty().isAlpha();
 
     var xml;
-    var error = validationErrors();
+    var error = req.validationErrors();
     if (error) {
         res.status(400);
         res.json(error);
@@ -156,7 +156,7 @@ router.post('/api/departament', function (req, res) {
     req.checkBody("number_employee", 3).notEmpty().isNumeric();
     req.checkBody("chief_name", "Istrati Ion").notEmpty().isAlpha();
 
-    var error = validationErrors();
+    var error = req.validationErrors();
 
     if (error) {
         res.status(400);
